@@ -1,0 +1,3 @@
+syntax match CCC /%/ conceal contained
+syntax match Todo /%.*%/ contains=CCC
+set conceallevel=2

@@ -1,9 +1,26 @@
+"1
+"2
+"3
+"4
+"5
+"6
+"7
 let s:markup = '>>>>>' . '>'
 let s:augmentation = {}
 function! AddAugmentationAbove(line, augmentations)
+	if !has_key(s:augmentation, a:line-1)
+		let s:augmentation[a:line-1] = [""]
+	endif
+	let s:augmentation[a:line-1] = s:augmentation[a:line-1] + a:augmentations
+	call UpdateAugmentation(a:line-1)
 endfunction
 
 function! AddAugmentationBelow(line, augmentations)
+	if !has_key(s:augmentation, a:line)
+		let s:augmentation[a:line] = [""]
+	endif
+	let s:augmentation[a:line] = [s:augmentation[a:line][0]] + a:augmentations + s:augmentation[a:line][1:]
+	call UpdateAugmentation(a:line)
 endfunction
 
 function! AddAugmentationRight(line, augmentation)
@@ -45,4 +62,5 @@ let m = matchadd("AugmentationColor", s:markup . ".*$", 9)
 set conceallevel=2 concealcursor=nv
 
 map <silent> ga :call AddAugmentationRight(4, "Test Augmentation")<CR>
-"map <silent> ga :call AddAugmentationBelow(4, ["Test Augmentation", "line one", "line 2", "line three", "line four", "line five"])<CR>
+map <silent> gb :call AddAugmentationBelow(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
+map <silent> gc :call AddAugmentationAbove(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
