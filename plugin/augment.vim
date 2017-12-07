@@ -7,6 +7,8 @@
 "7
 let s:markup = '>>>>>' . '>'
 let s:augmentation = {}
+let s:on = 0
+let s:recurse = 0
 function! AddAugmentationAbove(line, augmentations)
 	if !has_key(s:augmentation, a:line-1)
 		let s:augmentation[a:line-1] = [""]
@@ -31,9 +33,22 @@ function! AddAugmentationRight(line, augmentation)
 	call UpdateAugmentation()
 endfunction
 
-function! UpdateAugmentation()
+function! ClearAugmentation()
 	let curpos = getcurpos()[1:]
 	silent! execute("%substitute/" . s:markup . ".*//")
+	call cursor(curpos)
+endfunction
+
+function! UpdateAugmentation()
+	if s:on == 0
+		return
+	endif
+	echom "0" string(undotree().seq_cur)
+	let curpos = getcurpos()[1:]
+	call ClearAugmentation()
+	echom "1" string(undotree().seq_cur)
+	execute "normal i\<C-G>u"
+	echom "2" string(undotree().seq_cur)
 	for [aline, aug] in items(s:augmentation)
 	    let line = getline(aline)
 		call cursor(aline, 0)
@@ -53,7 +68,52 @@ function! UpdateAugmentation()
 	endfor
 
 	call cursor(curpos)
+	echom "3" string(undotree().seq_cur)
 endfunction
+
+function! TextChanged()
+	if s:recurse == 1
+		let s:recurse = 0
+		return
+	endif
+	call UpdateAugmentation()
+endfunction
+
+function! InsertLeave()
+	if s:recurse == 1
+		let s:recurse = 0
+		return
+	endif
+	call UpdateAugmentation()
+	let s:recurse = 1
+endfunction
+
+function! s:AugOn()
+	let s:on = 1
+	echom "AugOn"
+	delcommand AugmentOn
+	command AugmentOff call s:AugOff()
+	call UpdateAugmentation()
+	let s:recurse = 1
+	augroup augmentGroup
+		autocmd!
+		autocmd TextChanged * call TextChanged()
+		autocmd InsertLeave * call InsertLeave()
+	augroup END
+endfunction
+
+function! s:AugOff()
+	let s:on = 0
+	echom "AugOff"
+	delcommand AugmentOff
+	command AugmentOn call s:AugOn()
+	call ClearAugmentation()
+	augroup augmentGroup
+		autocmd!
+	augroup END
+endfunction
+
+command! AugmentOn call s:AugOn()
 
 highlight AugmentationColor ctermfg=green
 let m = matchadd("AugmentationColor", s:markup . ".*$", 9)
@@ -64,6 +124,6 @@ map <silent> ga :call AddAugmentationRight(4, "Test Augmentation")<CR>
 map <silent> gb :call AddAugmentationBelow(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
 map <silent> gc :call AddAugmentationAbove(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
 
+
 "noremap u uu
-"autocmd TextChanged * call UpdateAugmentation()
-"autocmd TextChangedI * call UpdateAugmentation()
+"autocmd TextChangedI * call TextChanged()
