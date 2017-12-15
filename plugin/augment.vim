@@ -8,7 +8,9 @@
 let s:markup = '>>>>>' . '>'
 let s:augmentation = {}
 let s:on = 0
+let s:something = 0
 let s:recurse = 0
+let s:textChangedI = 0
 function! AddAugmentationAbove(line, augmentations)
 	if !has_key(s:augmentation, a:line-1)
 		let s:augmentation[a:line-1] = [""]
@@ -35,7 +37,16 @@ endfunction
 
 function! ClearAugmentation()
 	let curpos = getcurpos()[1:]
+	let before = getbufline("",'^','$')
 	silent! execute("%substitute/" . s:markup . ".*//")
+	let after = getbufline("",'^','$')
+	if after == before
+		echom "nothing cleared"
+	else
+		echom "something cleared"
+		let s:recurse = 1
+	endif
+	let s:recurse = 1
 	call cursor(curpos)
 endfunction
 
@@ -43,12 +54,24 @@ function! UpdateAugmentation()
 	if s:on == 0
 		return
 	endif
-	echom "0" string(undotree().seq_cur)
-	let curpos = getcurpos()[1:]
 	call ClearAugmentation()
-	echom "1" string(undotree().seq_cur)
 	execute "normal i\<C-G>u"
-	echom "2" string(undotree().seq_cur)
+	let s:beforeAug = getbufline("",'^','$')
+	call DrawAugmentation()
+	let afterAug = getbufline("",'^','$')
+	if afterAug == s:beforeAug
+		echom "nothing added"
+		let s:something = 0
+	else
+		echom "something added"
+		let s:something = 1
+		let s:recurse = 1
+	endif
+endfunction
+
+function! DrawAugmentation()
+	let curpos = getcurpos()[1:]
+	"echom "1" string(undotree().seq_cur)
 	for [aline, aug] in items(s:augmentation)
 	    let line = getline(aline)
 		call cursor(aline, 0)
@@ -67,8 +90,8 @@ function! UpdateAugmentation()
 		endfor
 	endfor
 
+	"echom "3" string(undotree().seq_cur)
 	call cursor(curpos)
-	echom "3" string(undotree().seq_cur)
 endfunction
 
 function! TextChanged()
@@ -79,13 +102,16 @@ function! TextChanged()
 	call UpdateAugmentation()
 endfunction
 
+function! TextChangedI()
+	let s:textChangedI = 1
+endfunction
+
 function! InsertLeave()
-	if s:recurse == 1
-		let s:recurse = 0
+	if s:textChangedI == 1
 		return
 	endif
+	let s:textChangedI = 0
 	call UpdateAugmentation()
-	let s:recurse = 1
 endfunction
 
 function! s:AugOn()
@@ -93,11 +119,11 @@ function! s:AugOn()
 	echom "AugOn"
 	delcommand AugmentOn
 	command AugmentOff call s:AugOff()
-	call UpdateAugmentation()
-	let s:recurse = 1
+	call DrawAugmentation()
 	augroup augmentGroup
 		autocmd!
 		autocmd TextChanged * call TextChanged()
+		autocmd TextChangedI * call TextChangedI()
 		autocmd InsertLeave * call InsertLeave()
 	augroup END
 endfunction
@@ -124,6 +150,4 @@ map <silent> ga :call AddAugmentationRight(4, "Test Augmentation")<CR>
 map <silent> gb :call AddAugmentationBelow(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
 map <silent> gc :call AddAugmentationAbove(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
 
-
 "noremap u uu
-"autocmd TextChangedI * call TextChanged()
