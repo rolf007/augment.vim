@@ -130,19 +130,19 @@ function! s:InsertLeave()
 		let s:recurse = 0
 		return
 	endif
-	if s:textChangedI == 1
+	if s:textChangedI == 0
 		return
 	endif
 	let s:textChangedI = 0
-	call s:UpdateAugmentation()
+	call s:UpdateAug()
 endfunction
 
 highlight AugmentColor ctermfg=green
 let m = matchadd("AugmentColor", s:markup . ".*$", 9)
-"let m2 = matchadd('Conceal', s:markup, 10, 99)
-set conceallevel=2 concealcursor=nv
+let m2 = matchadd('Conceal', s:markup, 10, 99)
+set conceallevel=2 concealcursor=nvci
 
-map <silent> ga :call AugmentRight(4, "Test Augmentation")<CR>
+map <silent> ga :call AugmentRight(4, "Test Augment")<CR>
 map <silent> gb :call AugmentBelow(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
 map <silent> gc :call AugmentAbove(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
 

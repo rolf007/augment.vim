@@ -9,8 +9,8 @@ execute("normal i\<C-G>u")
 execute("normal! oz\<esc>")
 execute("normal i\<C-G>u")
 
-call AugmentOn()
 call AugmentRight(1, "hey")
+call AugmentOn()
 call RemoveHooks()
 call assert_equal([['x'],['xy'],['xy','z'],['xy>>>>>>hey','z']], GetUndoHistory())
 "UndotreeToggle
