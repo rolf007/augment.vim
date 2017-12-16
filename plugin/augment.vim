@@ -8,9 +8,7 @@
 let s:markup = '>>>>>' . '>'
 let s:augmentation = {}
 let s:on = 0
-let s:something = 0
 let s:recurse = 0
-let s:textChangedI = 0
 
 function! AugmentOn()
 	let s:on = 1
@@ -28,28 +26,47 @@ function! s:AugmentOff()
 	let s:on = 0
 	call s:ClearAug()
 endfunction
+
 function! AugmentAbove(line, augmentations)
+	if s:on && len(s:augmentation) != 0
+		silent undo
+	endif
 	if !has_key(s:augmentation, a:line-1)
 		let s:augmentation[a:line-1] = [""]
 	endif
 	let s:augmentation[a:line-1] = s:augmentation[a:line-1] + a:augmentations
-	call s:UpdateAug()
+	if s:on
+		call s:DrawAug()
+	endif
+	let s:recurse = 1
 endfunction
 
 function! AugmentBelow(line, augmentations)
+	if s:on && len(s:augmentation) != 0
+		silent undo
+	endif
 	if !has_key(s:augmentation, a:line)
 		let s:augmentation[a:line] = [""]
 	endif
 	let s:augmentation[a:line] = [s:augmentation[a:line][0]] + a:augmentations + s:augmentation[a:line][1:]
-	call s:UpdateAug()
+	if s:on
+		call s:DrawAug()
+	endif
+	let s:recurse = 1
 endfunction
 
 function! AugmentRight(line, augmentation)
+	if s:on && len(s:augmentation) != 0
+		silent undo
+	endif
 	if !has_key(s:augmentation, a:line)
 		let s:augmentation[a:line] = [""]
 	endif
 	let s:augmentation[a:line][0] .= a:augmentation
-	call s:UpdateAug()
+	if s:on
+		call s:DrawAug()
+	endif
+	let s:recurse = 1
 endfunction
 
 function! s:UpdateAug()
@@ -59,30 +76,12 @@ function! s:UpdateAug()
 	call s:ClearAug()
 	" this generates an InsertEnter + InsertLeave
 	execute "normal i\<C-G>u"
-	let s:beforeAug = getbufline("",'^','$')
 	call s:DrawAug()
-	let afterAug = getbufline("",'^','$')
-	if afterAug == s:beforeAug
-		echom "nothing added"
-		let s:something = 0
-	else
-		echom "something added"
-		let s:something = 1
-		let s:recurse = 1
-	endif
 endfunction
 
 function! s:ClearAug()
 	let curpos = getcurpos()[1:]
-	let before = getbufline("",'^','$')
 	silent! execute("%substitute/" . s:markup . ".*//")
-	let after = getbufline("",'^','$')
-	if after == before
-		echom "nothing cleared"
-	else
-		echom "something cleared"
-		let s:recurse = 1
-	endif
 	let s:recurse = 1
 	call cursor(curpos)
 endfunction
@@ -119,22 +118,31 @@ function! s:TextChanged()
 endfunction
 
 function! s:TextChangedI()
-	let s:textChangedI = 1
 endfunction
 
 function! s:InsertEnter()
+	let s:buf_at_enter = getbufline("",'^','$')
 endfunction
 
 function! s:InsertLeave()
+	let buf_at_leave = getbufline("",'^','$')
+	if s:buf_at_enter == buf_at_leave
+		let s:recurse = 0
+		return
+	endif
 	if s:recurse == 1
 		let s:recurse = 0
 		return
 	endif
-	if s:textChangedI == 0
-		return
-	endif
-	let s:textChangedI = 0
-	call s:UpdateAug()
+	call s:ClearAug()
+	let store = getbufline("",'^','$')
+	silent undo
+	silent undo
+	execute("normal! ggdG")
+	call append(1, store)
+	execute("normal! ggdd")
+	execute("normal i\<C-G>u")
+	call s:DrawAug()
 endfunction
 
 highlight AugmentColor ctermfg=green
@@ -147,3 +155,20 @@ map <silent> gb :call AugmentBelow(4, ["line one", "line 2", "line three", "line
 map <silent> gc :call AugmentAbove(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
 
 "noremap u uu
+"what to test:
+"Event:       special cases
+"------------
+"AugmentOn    something added, nothing added
+"AugmentOff   something added, nothing added
+"AugmentRight something added, nothing added, off
+"type         something added, nothing added, off
+"undo         something added, nothing added, off
+"redo         something added, nothing added, off
+"
+"type:
+"
+"                 <
+"         t       t                       >
+"  >      >       >                 t     t
+"  B      B       B store B         B     B
+"  A type A clear A 3undo A restore A add A
