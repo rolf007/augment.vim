@@ -2,8 +2,16 @@ source "${BASH_SOURCE%/*}"/../setup.sh
 
 cat >>$vimtestdir/test.vim <<EOL
 
-execute("normal! ix\<esc>")
-AugmentOn
+execute("normal! ax\<esc>")
+execute("normal i\<C-G>u")
+execute("normal! ay\<esc>")
+execute("normal i\<C-G>u")
+execute("normal! oz\<esc>")
+call AugmentOn()
+call AugmentRight(1, "hey")
+call RemoveHooks()
+"call assert_equal([['x'],['xy'],['xy','z'],['xy>>>>>>hey','z']], GetUndoHistory())
+"UndotreeToggle
 EOL
 
 HOME=$vimtestdir vim -X a.txt

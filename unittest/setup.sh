@@ -2,6 +2,7 @@ ROOT=$PWD
 vimtestdir=$(mktemp -d)
 mkdir $vimtestdir/.vim
 cp -r ~/.vim/bundle/augment.vim/* $vimtestdir/.vim
+#cp -r ~/.vim/bundle/undotree.vim/* $vimtestdir/.vim
 
 succes_cmd=${succes_cmd:-"echom \"unittest succeded\""}
 
@@ -31,6 +32,30 @@ function! s:Test()
 		$succes_cmd
 	endif
 endfunction
+
+function! GetUndoHistory()
+	let h = []
+	let i = 0
+	while 1
+		call add(h, getbufline("",'^','$'))
+		silent undo
+		let i = i + 1
+		if undotree().seq_cur == 0
+			break
+		endif
+	endwhile
+	for r in range(1,i)
+		silent redo
+	endfor
+	return reverse(h)
+endfunction
+
+function! RemoveHooks()
+	augroup augmentGroup
+		autocmd!
+	augroup END
+endfunction
+
 EOL
 
 pushd $vimtestdir > /dev/null
