@@ -2,7 +2,7 @@ ROOT=$PWD
 vimtestdir=$(mktemp -d)
 mkdir $vimtestdir/.vim
 cp -r ~/.vim/bundle/augment.vim/* $vimtestdir/.vim
-#cp -r ~/.vim/bundle/undotree.vim/* $vimtestdir/.vim
+cp -r ~/.vim/bundle/undotree.vim/* $vimtestdir/.vim
 
 succes_cmd=${succes_cmd:-"echom \"unittest succeded\""}
 

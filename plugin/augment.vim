@@ -12,6 +12,11 @@ let s:recurse = 0
 
 function! AugmentOn()
 	let s:on = 1
+	let s:match_markup = matchadd("AugmentColor", s:markup . ".*$", 9)
+	let s:match_conceal = matchadd('Conceal', s:markup, 10, 99)
+	let s:concealcursor = &concealcursor
+	set conceallevel=2
+	set concealcursor=nvci
 	call s:DrawAug()
 	augroup augmentGroup
 		autocmd!
@@ -20,11 +25,21 @@ function! AugmentOn()
 		autocmd InsertLeave * call s:InsertLeave()
 		autocmd InsertEnter * call s:InsertEnter()
 	augroup END
+	nnoremap u :call <SID>UndoAug()<CR>
 endfunction
 
-function! s:AugmentOff()
+function! AugmentOff()
+	if s:on && len(s:augmentation) != 0
+		silent undo
+	endif
 	let s:on = 0
-	call s:ClearAug()
+	augroup augmentGroup
+		autocmd!
+	augroup END
+	call matchdelete(s:match_markup)
+	call matchdelete(s:match_conceal)
+	let &concealcursor = s:concealcursor
+	nunmap u
 endfunction
 
 function! AugmentAbove(line, augmentations)
@@ -69,6 +84,12 @@ function! AugmentRight(line, augmentation)
 	let s:recurse = 1
 endfunction
 
+function! s:UndoAug()
+	silent undo
+	silent undo
+	call s:DrawAug()
+	let s:recurse = 1
+endfunction
 function! s:UpdateAug()
 	if s:on == 0
 		return
@@ -146,9 +167,6 @@ function! s:InsertLeave()
 endfunction
 
 highlight AugmentColor ctermfg=green
-let m = matchadd("AugmentColor", s:markup . ".*$", 9)
-let m2 = matchadd('Conceal', s:markup, 10, 99)
-set conceallevel=2 concealcursor=nvci
 
 map <silent> ga :call AugmentRight(4, "Test Augment")<CR>
 map <silent> gb :call AugmentBelow(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
