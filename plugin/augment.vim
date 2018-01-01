@@ -11,6 +11,7 @@ let s:on = 0
 let s:recurse = 0
 
 function! AugmentOn()
+	let curpos = getcurpos()[1:]
 	let s:on = 1
 	let s:match_markup = matchadd("AugmentColor", s:markup . ".*$", 9)
 	let s:match_conceal = matchadd('Conceal', s:markup, 10, 99)
@@ -26,20 +27,24 @@ function! AugmentOn()
 		autocmd InsertEnter * call s:InsertEnter()
 	augroup END
 	nnoremap u :call <SID>UndoAug()<CR>
+	call cursor(curpos)
 endfunction
 
 function! AugmentOff()
-	if s:on && len(s:augmentation) != 0
-		silent undo
-	endif
-	let s:on = 0
+	let curpos = getcurpos()[1:]
 	augroup augmentGroup
 		autocmd!
 	augroup END
+	if s:on && len(s:augmentation) != 0
+		silent undo
+		let s:recurse = 1
+	endif
+	let s:on = 0
 	call matchdelete(s:match_markup)
 	call matchdelete(s:match_conceal)
 	let &concealcursor = s:concealcursor
 	nunmap u
+	call cursor(curpos)
 endfunction
 
 function! AugmentAbove(line, augmentations)
@@ -85,19 +90,12 @@ function! AugmentRight(line, augmentation)
 endfunction
 
 function! s:UndoAug()
+	let curpos = getcurpos()[1:]
 	silent undo
 	silent undo
 	call s:DrawAug()
 	let s:recurse = 1
-endfunction
-function! s:UpdateAug()
-	if s:on == 0
-		return
-	endif
-	call s:ClearAug()
-	" this generates an InsertEnter + InsertLeave
-	execute "normal i\<C-G>u"
-	call s:DrawAug()
+	call cursor(curpos)
 endfunction
 
 function! s:ClearAug()
@@ -135,7 +133,13 @@ function! s:TextChanged()
 		let s:recurse = 0
 		return
 	endif
-	call s:UpdateAug()
+	if s:on == 0
+		return
+	endif
+	call s:ClearAug()
+	" this generates an InsertEnter + InsertLeave
+	execute "normal i\<C-G>u"
+	call s:DrawAug()
 endfunction
 
 function! s:TextChangedI()
@@ -155,6 +159,7 @@ function! s:InsertLeave()
 		let s:recurse = 0
 		return
 	endif
+	let curpos = getcurpos()[1:]
 	call s:ClearAug()
 	let store = getbufline("",'^','$')
 	silent undo
@@ -164,13 +169,24 @@ function! s:InsertLeave()
 	execute("normal! ggdd")
 	execute("normal i\<C-G>u")
 	call s:DrawAug()
+	call cursor(curpos)
 endfunction
 
 highlight AugmentColor ctermfg=green
 
-map <silent> ga :call AugmentRight(4, "Test Augment")<CR>
-map <silent> gb :call AugmentBelow(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
-map <silent> gc :call AugmentAbove(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
+if expand('%:t') == "augment.vim"
+	map <silent> ga :call AugmentRight(4, "Test Augment")<CR>
+	map <silent> gb :call AugmentBelow(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
+	map <silent> gc :call AugmentAbove(4, ["line one", "line 2", "line three", "line four", "line five"])<CR>
+	map <silent> gz :call AugmentOn()<CR>
+	map <silent> gx :call AugmentOff()<CR>
+endif
+
+function! RemoveHooks()
+	augroup augmentGroup
+		autocmd!
+	augroup END
+endfunction
 
 "noremap u uu
 "what to test:
