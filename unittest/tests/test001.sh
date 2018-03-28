@@ -14,7 +14,7 @@ call AugmentRight(1, "hey")
 execute("normal i\<C-G>u")
 call AugmentRight(1, "grey")
 call RemoveHooks()
-call assert_equal([['x'],['xy'],['xy','z'],['xy>>>>>>heygrey','z']], GetUndoHistory())
+call assert_equal([['x'],['xy'],['xy','z'],['xy<augment>heygrey','z']], GetUndoHistory())
 "UndotreeToggle
 EOL
 

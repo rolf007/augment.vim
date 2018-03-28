@@ -17,7 +17,7 @@ execute("normal i\<C-G>u")
 execute("normal! ow\<esc>")
 execute("normal i\<C-G>u")
 "call RemoveHooks()
-"call assert_equal([['x'],['xy'],['xy','z'],['xy','z','w'],['xy>>>>>>hey','z','w']], GetUndoHistory())
+"call assert_equal([['x'],['xy'],['xy','z'],['xy','z','w'],['xy<augment>hey','z','w']], GetUndoHistory())
 "UndotreeToggle
 EOL
 

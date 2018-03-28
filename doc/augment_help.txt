@@ -1,0 +1,43 @@
+*augment_help.txt*	For Vim version 8.0	Marts 2018
+*augment* *Augment*
+==============================================================================
+
+     ###a    ##u    ##u  ######g   ##m    ##m ########e ##n   ##n ########t
+    ##a##a   ##u    ##u ##g   ##g  ###m  ###m ##e       ###n  ##n    ##t
+   ##a  ##a  ##u    ##u ##g        ####m####m ##e       ####n ##n    ##t
+  ##a    ##a ##u    ##u ##g  ####g ##m### ##m ######e   ##n##n##n    ##t
+  #########a ##u    ##u ##g   ##g  ##m    ##m ##e       ##n ####n    ##t
+  ##a    ##a ##u    ##u ##g   ##g  ##m    ##m ##e       ##n  ###n    ##t
+  ##a    ##a  #######u   ######g   ##m    ##m ########e ##n   ##n    ##t
+
+==============================================================================
+CONTENTS                                                      *augment-contents*
+
+    1. Intro.....................................................|augment-intro|
+    2. Commands...............................................|augment-commands|
+    3. Misc.......................................................|augment-misc|
+
+==============================================================================
+INTRO                                                            *augment-intro*
+
+This Vim plugin adds functions to allow for augmentation of the current
+buffer.
+It is only a demo plugin of how a future feature of Vim could work.
+
+==============================================================================
+COMMANDS                                                      *augment-commands*
+
+:AugmentOn()
+:AugmentOff()
+:AugmentAbove(line, augmentations)
+:AugmentBelow(line, augmentations)
+:AugmentRight(line, augmentation)
+:AugmentClear()
+
+==============================================================================
+MISC                                                              *augment-misc*
+
+highlight AugmentColor ctermfg=green
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:

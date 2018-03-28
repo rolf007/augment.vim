@@ -5,7 +5,7 @@
 "5
 "6
 "7
-let s:markup = '>>>>>' . '>'
+let s:markup = '<augment>'
 let s:augmentation = {}
 let s:on = 0
 let s:recurse = 0
